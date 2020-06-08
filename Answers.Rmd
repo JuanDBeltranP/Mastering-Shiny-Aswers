@@ -1,0 +1,412 @@
+---
+title: "Shiny R answers for Mastering Shiny"
+output: html_notebook
+author: Juan Beltran
+---
+
+# Mastering Shiny answers
+
+In this notebook you will find the code for the different exercises in the book _Masterig shiny_
+
+## [Chapter 2](https://mastering-shiny.org/basic-app.html)
+1. Create an app that greets the user by name. You don’t know all the functions you need to do this yet, so I’ve included some lines of code below. Figure out which lines you’ll use and then copy and paste them into the right place in a Shiny app.
+```
+textInput("name", "What's your name?")
+renderText({
+  paste0("Hello ", input$name)
+})
+numericInput("age", "How old are you?")
+textOutput("greeting")
+tableOutput("mortgage")
+renderPlot("histogram", {
+  hist(rnorm(1000))
+}, res = 96)
+```
+
+Answer: 
+```{r}
+library(shiny)
+ui <- fluidPage(
+  textInput("name", "What's your name?"),
+  textOutput("greeting")
+)
+
+server <- function(input, output, session) {
+  output$greeting <- renderText({
+  paste0("Hello ", input$name)
+})
+}
+shinyApp(ui, server)
+```
+
+2. Suppose your friend wants to design an app that allows the user to set a number (x) between 1 and 50, and displays the result of multiplying this number by 5. This is their first attempt:
+
+```
+ui <- fluidPage(
+  sliderInput("x", label = "If x is", min = 1, max = 50, value = 30),
+  "then x times 5 is",
+  textOutput("product")
+)
+
+server <- function(input, output, session) {
+  output$product <- renderText({ 
+    x * 5
+  })
+}
+```
+But unfortunately it has an error. Can you help them find and correct the error?
+
+Answer: 
+
+```{r}
+ui <- fluidPage(
+  sliderInput("x", label = "If x is", min = 1, max = 50, value = 30),
+  "then x times 5 is",
+  textOutput("product")
+)
+
+server <- function(input, output, session) {
+  mul <- reactive(input$x * 5)
+  output$product <- renderText({ 
+    mul()
+  })
+}
+```
+
+3. Extend the app from the previous exercise to allow the user to set the value of the multiplier, y, so that the app yields the value of x * y. The final result should look like this:
+
+Answer: 
+
+```{r}
+ui <- fluidPage(
+  sliderInput("x", label = "If x is", min = 1, max = 50, value = 30),
+  sliderInput("y", label = "and y is", min = 1, max = 50, value = 5),
+  "then x times 5 is",
+  textOutput("product")
+)
+
+server <- function(input, output, session) {
+  mul <- reactive(input$x * input$y)
+  output$product <- renderText({ 
+    mul()
+  })
+}
+```
+4. Replace the UI and server components of your app from the previous exercise with the UI and server components below, run the app, and describe the app’s functionality. Then reduce the duplication in the app by using a reactive expression.
+
+```
+ui <- fluidPage(
+  sliderInput("x", "If x is", min = 1, max = 50, value = 30),
+  sliderInput("y", "and y is", min = 1, max = 50, value = 5),
+  "then, (x * y) is", textOutput("product"),
+  "and, (x * y) + 5 is", textOutput("product_plus5"),
+  "and (x * y) + 10 is", textOutput("product_plus10")
+)
+
+server <- function(input, output, session) {
+  output$product <- renderText({ 
+    product <- input$x * input$y
+    product
+  })
+  output$product_plus5 <- renderText({ 
+    product <- input$x * input$y
+    product + 5
+  })
+  output$product_plus10 <- renderText({ 
+    product <- input$x * input$y
+    product + 10
+  })
+}
+```
+Answer:
+The app is not low but I know there are parts of the code that are duplicated
+
+```{r}
+ui <- fluidPage(
+  sliderInput("x", "If x is", min = 1, max = 50, value = 30),
+  sliderInput("y", "and y is", min = 1, max = 50, value = 5),
+  "then, (x * y) is", textOutput("product"),
+  "and, (x * y) + 5 is", textOutput("product_plus5"),
+  "and (x * y) + 10 is", textOutput("product_plus10")
+)
+
+server <- function(input, output, session) {
+  product <- reactive(input$x * input$y)
+  output$product <- renderText({ 
+    product()
+  })
+  output$product_plus5 <- renderText({ 
+
+    product() + 5
+  })
+  output$product_plus10 <- renderText({ 
+
+    product() + 10
+  })
+}
+```
+
+5. The following app is very similar to one you’ve seen earlier in the chapter: you select a dataset from a package (this time we’re using the ggplot2 package) and the app prints out a summary and plot of the data. It also follows good practice and makes use of reactive expressions to avoid redundancy of code. However there are three bugs in the code provided below. Can you find and fix them?
+```
+library(ggplot2)
+datasets <- data(package = "ggplot2")$results[c(2, 4, 10), "Item"]
+
+ui <- fluidPage(
+  selectInput("dataset", "Dataset", choices = datasets),
+  verbatimTextOutput("summary"),
+  tableOutput("plot")
+)
+
+server <- function(input, output, session) {
+  dataset <- reactive({
+    get(input$dataset, "package:ggplot2")
+  })
+  output$summmry <- renderPrint({
+    summary(dataset())
+  })
+  output$plot <- renderPlot({
+    plot(dataset)
+  }, res = 96)
+}
+
+```
+```{r}
+library(ggplot2)
+datasets <- data(package = "ggplot2")$results[c(2, 4, 10), "Item"]
+
+ui <- fluidPage(
+  selectInput("dataset", "Dataset", choices = datasets),
+  verbatimTextOutput("summary"),
+  plotOutput("plot")
+)
+
+server <- function(input, output, session) {
+  dataset <- reactive({
+    get(input$dataset, "package:ggplot2")
+  })
+  output$summary <- renderPrint({
+    summary(dataset())
+  })
+  output$plot <- renderPlot({
+    plot(dataset())
+  }, res = 96)
+}
+```
+
+## [Chapter 3](https://mastering-shiny.org/basic-ui.html)
+### 3.2.8 Exercises 
+1. When space is at a premium, it’s useful to label text boxes using a placeholder that appears inside the text entry area. How do you call textInput() to generate the UI below?
+
+Answer: 
+```{r}
+ui <- fluidPage(
+  textInput("name", "", placeholder = "Your name")
+)
+```
+
+2. Carefully read the documentation for sliderInput() to figure out how to create a date slider, as shown below.
+
+```{r}
+ui <- fluidPage(
+  sliderInput("date", "When hould we deliver?",
+              min = base::strptime("2019-08-09", "%F" ),
+              max = base::strptime("2019-08-16", "%F"),
+              step = 0.25,
+              value = base::strptime("2019-08-10", "%F"),timeFormat = "%F" )
+)
+```
+
+3. If you have a moderately long list, it’s useful to create sub-headings that break the list up into pieces. Read the documentation for selectInput() to figure out how. (Hint: the underlying HTML is called <optgroup>.)
+
+Answer:This is part of the example described in the documentation
+```{r}
+ui <-  fluidPage(
+    selectInput("state", "Choose a state:",
+      list(`East Coast` = list("NY", "NJ", "CT"),
+           `West Coast` = list("WA", "OR", "CA"),
+           `Midwest` = list("MN", "WI", "IA")))
+    )
+```
+4. Create a slider input to select values between 0 and 100 where the interval between each selectable value on the slider is 5. Then, add animation to the input widget so when the user presses play the input widget scrolls through automatically.
+
+
+Answer:
+
+```{r}
+ui <-  fluidPage(
+    sliderInput("num", "Choose a range:",
+      step = 5,
+      min = 0,
+      max= 100, 
+      value = 0, animate = TRUE)
+    )
+```
+
+5. Using the following numeric input box the user can enter any value between 0 and 1000. What is the purpose of the step argument in this widget?
+
+```
+numericInput("number", "Select a value", value = 150, min = 0, max = 1000, step = 50)
+```
+Answer:
+
+It helps the user to find the closest next value when hits the right next-last option 
+
+### 3.3.5 Exercises
+
+1. Re-create the Shiny app from the plots section, this time setting height to 300px and width to 700px.
+```
+ui <- fluidPage(
+  plotOutput("plot", width = "400px")
+)
+server <- function(input, output, session) {
+  output$plot <- renderPlot(plot(1:5), res = 96)
+}
+```
+
+Answer:
+
+```{r}
+ui <- fluidPage(
+  plotOutput("plot", width = "700px", height = "300px")
+)
+server <- function(input, output, session) {
+  output$plot <- renderPlot(plot(1:5), res = 96)
+}
+```
+
+2. Add an additional plot to the right of the existing plot, and size it so that each plot takes up half the width of the app.
+Answer:
+
+```{r}
+ui <- fluidPage(
+  fluidRow(splitLayout(cellWidths = c("50%", "50%"),
+  width = 12,  plotOutput("plot", width = "100%"), 
+  width = 1,plotOutput("plot2", width = "100%")
+)))
+server <- function(input, output, session) {
+  output$plot <- renderPlot(plot(1:5), res = 96) 
+  output$plot2 <- renderPlot(plot(10:50), res = 96)
+}
+```
+
+3. Update the options for renderDataTable() below so that the table is displayed, but nothing else, i.e. remove the search, ordering, and filtering commands. You’ll need to read ?renderDataTable and review the options at https://datatables.net/reference/option/.
+
+```
+ui <- fluidPage(
+  dataTableOutput("table")
+)
+server <- function(input, output, session) {
+  output$table <- renderDataTable(mtcars, options = list(pageLength = 5))
+}
+```
+
+Answer:
+
+```{r}
+ui <- fluidPage(
+  dataTableOutput("table")
+)
+server <- function(input, output, session) {
+  output$table <- renderDataTable(mtcars, options = list(pageLength = 5, ordering = FALSE, searching = FALSE, search = FALSE, rowGroup = FALSE, render = FALSE ))
+}
+```
+
+### 3.4.6 Exercises
+
+1. Modify the Central Limit Theorem app so that the sidebar is on the right instead of the left.
+
+Answer:
+
+```{r}
+ui <- fluidPage(
+  titlePanel("Central limit theorem"),
+  sidebarLayout(
+    mainPanel(
+      plotOutput("hist")
+    ),
+    sidebarPanel(
+      numericInput("m", "Number of samples:", 2, min = 1, max = 100)
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  output$hist <- renderPlot({
+    means <- replicate(1e4, mean(runif(input$m)))
+    hist(means, breaks = 20)
+  }, res = 96)
+}
+```
+
+2. Browse the themes available in the shinythemes package, pick an attractive theme, and apply it the Central Limit Theorem app.
+
+```{r}
+ui <- fluidPage(theme = shinythemes::shinytheme("superhero"),
+  titlePanel("Central limit theorem"),
+  sidebarLayout(
+    
+    mainPanel(
+      plotOutput("hist")
+    ),
+    sidebarPanel(
+      numericInput("m", "Number of samples:", 2, min = 1, max = 100)
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  output$hist <- renderPlot({
+    means <- replicate(1e4, mean(runif(input$m)))
+    hist(means, breaks = 20)
+  }, res = 96)
+}
+```
+
+## [Chapter 4](https://mastering-shiny.org/basic-reactivity.html#fnref11)
+
+### 4.3.6 Exercises
+1. Draw the reactive graph for the following server functions:
+```
+server1 <- function(input, output, session) {
+  c <- reactive(input$a + input$b)
+  e <- reactive(c() + input$d)
+  output$f <- renderText(e())
+}
+server2 <- function(input, output, session) {
+  x <- reactive(input$x1 + input$x2 + input$x3)
+  y <- reactive(input$y1 + input$y2)
+  output$z <- renderText(x() / y())
+}
+server3 <- function(input, output, session) {
+  d <- reactive(c() ^ input$d)
+  a <- reactive(input$a * 10)
+  c <- reactive(b() / input$c) 
+  b <- reactive(a() + input$b)
+}
+```
+Answer: 
+
+server 1:
+```
+| a > ->  |> c > -> |> f |
+| b > -^  
+          |  d > -^
+```
+server 2:
+```
+| x1 > -> |> x > -> |> z |
+| x2 > -^
+| x3 > -^
+| y1 > -> |> y > -^
+| y2 > -^
+```
+server 3:
+```
+| a > -> |> a > -> |> b > -> |> c > -> |> d |
+| b >           -^
+| c >                     -^
+| d >                               -^
+```
+
+
+
