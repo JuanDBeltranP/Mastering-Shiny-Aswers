@@ -408,5 +408,16 @@ server 3:
 | d >                               -^
 ```
 
+2. Can the reactive graph contain a cycle? Why/why not?
 
+Let's define an inner cycle when parts of the graph  can loop other. In that case the answer is yes, for example when an input modifies the list of options of a second input. BUT,a whole cycle will be impossible because the app will be constantly changing therefore changing the input values in the code and not by the user which enters in conflict with the input read only paradigm. 
+
+4.4.6 Exercise
+1. Use reactive expressions to reduce the duplicated code in the following simple apps.
+
+Answer: 
+
+Currently in the book there is no code for the exercises.
+
+## [Chapter 5](https://mastering-shiny.org/basic-case-study.html)
 
