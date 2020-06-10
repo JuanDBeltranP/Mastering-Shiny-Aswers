@@ -1,8 +1,19 @@
 ## This app is to run all the exercises in Mastering Shiny Book
 library(shiny)
 library(ggplot2)
+library(neiss)
+library(tidyverse)
 datasets <- data(package = "ggplot2")$results[c(2, 4, 10), "Item"]
+injuries %>%
+  filter(trmt_date >= as.Date("2017-01-01"), trmt_date < as.Date("2018-01-01")) %>%
+  semi_join(top_prod, by = "prod1") %>%
+  mutate(age = floor(age), sex = tolower(sex), race = tolower(race)) %>%
+  filter(sex != "unknown") %>%
+  select(trmt_date, age, sex, race, body_part, diag, location, prod_code = prod1, weight, narrative) %>%
+  vroom::vroom_write("neiss/injuries.tsv.gz")
 
+injuries <- vroom::vroom("neiss/injuries.tsv.gz")
+injuries
 
 ui <- fluidPage(
   fluidRow(
